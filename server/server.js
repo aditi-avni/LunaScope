@@ -1,15 +1,21 @@
+
+require('dotenv').config()
 const express = require('express')
+const mongoose = require('mongoose')
+const locationsRouter = require('./routes/locations')
+
 const server = express()
 
-server.get("/",(req,res)=>{
-    res.send("server running")
-});
+server.use(express.json())
+server.use('/api/locations', locationsRouter)
 
-server.get("/api/locations",(req,res)=>{
-    res.json([
-        {name : "crater", type : "location"},
-        {name : "waterice", type : "location"}
-    ]);
-});
-
-server.listen(3000)
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('MongoDB connected!')
+    server.listen(3000, () => {
+      console.log('Server running on port 3000')
+    })
+  })
+  .catch(err => {
+    console.error('MongoDB connection failed:', err.message)
+  })
