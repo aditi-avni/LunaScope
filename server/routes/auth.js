@@ -49,14 +49,26 @@ router.post('/register', async (req, res) => {
             passwordHash
         })
 
+        if (!process.env.JWT_SECRET) {
+            throw new Error('JWT_SECRET is not configured')
+        }
+
+        const token = jwt.sign(
+            { userId: user._id.toString() },
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+        )
+
         res.status(201).json({
             message: 'Account created successfully',
+            token,
             user: {
                 id: user._id,
                 email: user.email
             }
-        })
-    } catch (err) {
+        })  }
+
+    catch (err) {
         if (err.code === 11000) {
             return res.status(409).json({
                 message: 'An account with this email already exists'

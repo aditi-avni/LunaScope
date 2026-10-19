@@ -1,7 +1,7 @@
 const cors = require('cors')
 const authRouter = require('./routes/auth')
 const bookmarksRouter = require('./routes/bookmarks')
-const studyResourcesRouter = require('./routes/studyResources')
+const studyResourcesRouter = require('./routes/StudyResource')
 
 require('dotenv').config()
 const express = require('express')
