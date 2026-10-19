@@ -1,7 +1,22 @@
 
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { useEffect } from 'react'
 
 function Home() {
+  const [locationarray, setlocationarray] = useState([])
+
+  useEffect(()=>{
+    async function getLocations() {
+      const response = await fetch('http://localhost:3000/api/locations')
+      const data = await response.json()
+      setlocationarray(data)
+      console.log(data[0])
+    }
+    getLocations()
+    // getLocations() calling for execution
+  },[])
+
   return (
     <div className="app">
       <nav className="navbar">
@@ -42,20 +57,20 @@ function Home() {
 
           <div className="location-grid">
             {/* Shackleton Crater */}
-            <div className="location-card">
+            
+          {locationarray.map((location) => (
+            <div className="location-card" key={location._id}>
               <img
                 src="https://science.nasa.gov/wp-content/uploads/2024/01/faces-of-shackleton.jpg"
-                alt="Shackleton Crater near the Moon's south pole"
+                alt={location.name}
               />
 
               <div className="location-info">
-                <p className="location-label">LUNAR CRATER</p>
-                <h3>Shackleton Crater</h3>
+                <p className="location-label">{location.type}</p>
+                <h3> {location.name}</h3>
 
                 <p className="description">
-                  Explore a crater near the Moon's south pole where
-                  scientists investigate permanently shadowed areas
-                  and the possibility of water ice.
+                  {location.description}
                 </p>
 
                 <Link to="/locations/shackleton">
@@ -63,6 +78,8 @@ function Home() {
                 </Link>
               </div>
             </div>
+          ))}
+
 
             {/* Water Ice */}
             <div className="location-card">

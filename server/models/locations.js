@@ -1,28 +1,48 @@
+
 const mongoose = require('mongoose')
 
-
 const locationSchema = new mongoose.Schema({
-    name:{
-        type : String,
-        required : true
-    },
-    type: {
-        type: String,
-        required: true
-    },
-    description:{
-        type : String,
-        required: true
-    },
-    latitude:{
-        type: Number,
-        required : false
-    },
-    longitude:{
-        type: Number,
-        required : false
-    }
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  type: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  description: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  latitude: {
+    type: Number,
+    min: -90,
+    max: 90
+  },
+  longitude: {
+    type: Number,
+    min: -180,
+    max: 180
+  },
+  imageUrl: {
+    type: String,
+    default: ''
+  },
+  region: {
+    type: String,
+    default: 'Moon'
+  },
+  facts: {
+    type: [String],
+    default: []
+  },
+  sourceUrl: {
+    type: String,
+    default: ''
+  }
 })
 
-const location = mongoose.model('Location',locationSchema)
-module.exports = location
+module.exports = mongoose.model('Location', locationSchema)

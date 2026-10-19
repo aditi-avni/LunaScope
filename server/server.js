@@ -1,3 +1,4 @@
+const cors = require('cors')
 
 require('dotenv').config()
 const express = require('express')
@@ -7,6 +8,7 @@ const locationsRouter = require('./routes/locations')
 const server = express()
 
 server.use(express.json())
+server.use(cors())
 server.use('/api/locations', locationsRouter)
 
 mongoose.connect(process.env.MONGO_URI)
