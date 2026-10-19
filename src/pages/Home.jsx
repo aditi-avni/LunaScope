@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import MyLibrary from '../components/MyLibrary'
 
 const API_URL = 'http://localhost:3000/api/locations'
 
@@ -83,6 +84,7 @@ function Home() {
         <div className="nav-links">
           <a href="#explore">Explore</a>
           <a href="#study-areas">Study Areas</a>
+          <a href="#my-library">My Library</a>
           <a href="#about">About</a>
         </div>
       </nav>
@@ -236,13 +238,9 @@ function Home() {
           </p>
         </section>
 
-        <section className="about" id="about">
-          <h2>Understanding our nearest celestial neighbour</h2>
-          <p>
-            LunaScope brings lunar terrain information and scientific
-            context together in one place for curious explorers.
-          </p>
-        </section>
+        
+        <MyLibrary />
+
       </main>
 
       <footer>
