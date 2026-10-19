@@ -1,4 +1,6 @@
 const cors = require('cors')
+const authRouter = require('./routes/auth')
+const bookmarksRouter = require('./routes/bookmarks')
 
 require('dotenv').config()
 const express = require('express')
@@ -10,6 +12,8 @@ const server = express()
 server.use(express.json())
 server.use(cors())
 server.use('/api/locations', locationsRouter)
+server.use('/api/auth', authRouter)
+server.use('/api/bookmarks', bookmarksRouter)
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
