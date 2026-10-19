@@ -1,38 +1,68 @@
 
 const express = require('express')
 const router = express.Router()
+const mongoose = require('mongoose')
 const Location = require('../models/locations')
 
+// Escape special characters in search input
+const escapeRegex = (value) =>
+    value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+// Validate MongoDB document IDs
+const isValidId = (id) => mongoose.isValidObjectId(id)
+
+// Validate location input using the existing schema
+const validateLocation = (data) => {
+    const allowedFields = [
+        'name',
+        'type',
+        'description',
+        'latitude',
+        'longitude',
+        'imageUrl',
+        'region',
+        'facts',
+        'sourceUrl'
+    ]
+
+    const filtered = {}
+
+    for (const field of allowedFields) {
+        if (Object.prototype.hasOwnProperty.call(data, field)) {
+            filtered[field] = data[field]
+        }
+    }
+
+    return filtered
+}
+
+// GET all locations with search and filters
 router.get('/', async (req, res) => {
     try {
-        const { search, type, region, minLat, maxLat, minLon, maxLon } = req.query
+        const {
+            search, type, region,
+            minLat, maxLat, minLon, maxLon
+        } = req.query
 
         const query = {}
 
-        // Search by location name
         if (search) {
             query.name = {
-                $regex: search,
+                $regex: escapeRegex(search),
                 $options: 'i'
             }
         }
 
-        // Filter by terrain type
-        if (type) {
-            query.type = type
-        }
+        if (type) query.type = type
+        if (region) query.region = region
 
-        // Filter by region
-        if (region) {
-            query.region = region
-        }
+        const coordinates = { minLat, maxLat, minLon, maxLon }
 
-        // Validate coordinate parameters
-        const coordinateParams = { minLat, maxLat, minLon, maxLon }
-
-        for (const [key, value] of Object.entries(coordinateParams)) {
-            if (value !== undefined && (value.trim() === '' || !Number.isFinite(Number(value)))) {
+        for (const [key, value] of Object.entries(coordinates)) {
+            if (
+                value !== undefined &&
+                (value.trim() === '' || !Number.isFinite(Number(value)))
+            ) {
                 return res.status(400).json({
                     message: `Invalid coordinate parameter: ${key}`
                 })
@@ -64,14 +94,12 @@ router.get('/', async (req, res) => {
             })
         }
 
-        // Filter by latitude range
         if (minLatitude !== undefined || maxLatitude !== undefined) {
             query.latitude = {}
             if (minLatitude !== undefined) query.latitude.$gte = minLatitude
             if (maxLatitude !== undefined) query.latitude.$lte = maxLatitude
         }
 
-        // Filter by longitude range
         if (minLongitude !== undefined || maxLongitude !== undefined) {
             query.longitude = {}
             if (minLongitude !== undefined) query.longitude.$gte = minLongitude
@@ -80,69 +108,121 @@ router.get('/', async (req, res) => {
 
         const locations = await Location.find(query)
         res.json(locations)
-
     } catch (err) {
         console.error('Location query failed:', err.message)
-        res.status(500).json({
-            message: 'Unable to access database'
-        })
+        res.status(500).json({ message: 'Unable to access database' })
     }
 })
 
-
+// GET one location
 router.get('/:id', async (req, res) => {
     try {
-        const id = req.params.id
-        const found = await Location.findById(id)
+        const { id } = req.params
 
-        if (!found) {
-            return res.status(404).json({ message: "Location not found" })
+        if (!isValidId(id)) {
+            return res.status(400).json({ message: 'Invalid location ID' })
         }
 
-        res.json(found)
+        const location = await Location.findById(id)
+
+        if (!location) {
+            return res.status(404).json({ message: 'Location not found' })
+        }
+
+        res.json(location)
     } catch (err) {
-        res.status(500).json({ message: "Unable to get data" })
+        console.error('Get location failed:', err.message)
+        res.status(500).json({ message: 'Unable to retrieve location' })
     }
 })
 
-router.put("/:id",async (req,res) => {
-    try{
-        const id = req.params.id
-        const info = req.body
-        const updateddata = await Location.findByIdAndUpdate(id,info, {new:true})
-        if(!updateddata){
-            return res.status(404).json({message : "unable to find the data"})
-        }
-        res.json(updateddata)
-    }catch{
-        res.status(500).json({ message: "Unable to get data" })
-
-    }
-})
-
+// CREATE a location (development only; protect before deployment)
 router.post('/', async (req, res) => {
     try {
-        const data = req.body
-        const datareturn = await Location.create(data)
-        res.status(201).json(datareturn)
+        const data = validateLocation(req.body)
+
+        if (!data.name || !data.type || !data.description) {
+            return res.status(400).json({
+                message: 'Name, type, and description are required'
+            })
+        }
+
+        const location = await Location.create(data)
+        res.status(201).json(location)
     } catch (err) {
-        res.status(500).json({ message: "Unable to send data" })
+        console.error('Create location failed:', err.message)
+
+        if (err.name === 'ValidationError' || err.name === 'CastError') {
+            return res.status(400).json({ message: 'Invalid location data' })
+        }
+
+        res.status(500).json({ message: 'Unable to create location' })
     }
 })
 
-router.delete("/:id",async (req,res) => {
-    try{
-        const id = req.params.id
-        const deleteindex = await Location.findByIdAndDelete(id)
-        if(!deleteindex){
-            return res.status(404).json({message : "unable to find the data"})
-        }
-        res.json({message : "data deleted"})
-    }catch{
-        res.status(500).json({ message: "Unable to get data" })
+// UPDATE a location (development only; protect before deployment)
+router.put('/:id', async (req, res) => {
+    try {
+        const { id } = req.params
 
+        if (!isValidId(id)) {
+            return res.status(400).json({ message: 'Invalid location ID' })
+        }
+
+        const data = validateLocation(req.body)
+
+        if (Object.keys(data).length === 0) {
+            return res.status(400).json({
+                message: 'No valid location fields provided'
+            })
+        }
+
+        const location = await Location.findByIdAndUpdate(
+            id,
+            { $set: data },
+            {
+                new: true,
+                runValidators: true,
+                strict: 'throw'
+            }
+        )
+
+        if (!location) {
+            return res.status(404).json({ message: 'Location not found' })
+        }
+
+        res.json(location)
+    } catch (err) {
+        console.error('Update location failed:', err.message)
+
+        if (err.name === 'ValidationError' || err.name === 'CastError') {
+            return res.status(400).json({ message: 'Invalid location data' })
+        }
+
+        res.status(500).json({ message: 'Unable to update location' })
+    }
+})
+
+// DELETE a location (development only; protect before deployment)
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params
+
+        if (!isValidId(id)) {
+            return res.status(400).json({ message: 'Invalid location ID' })
+        }
+
+        const location = await Location.findByIdAndDelete(id)
+
+        if (!location) {
+            return res.status(404).json({ message: 'Location not found' })
+        }
+
+        res.json({ message: 'Location deleted successfully' })
+    } catch (err) {
+        console.error('Delete location failed:', err.message)
+        res.status(500).json({ message: 'Unable to delete location' })
     }
 })
 
 module.exports = router
-

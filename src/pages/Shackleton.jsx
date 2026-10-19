@@ -1,7 +1,43 @@
 
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+
+const API_URL = 'http://localhost:3000/api/locations'
 
 function Shackleton() {
+  const [location, setLocation] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    async function getLocation() {
+      try {
+        const response = await fetch(API_URL)
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error('Unable to fetch lunar locations')
+        }
+
+        const shackleton = data.find(
+          (item) => item.name === 'Shackleton Crater'
+        )
+
+        if (!shackleton) {
+          throw new Error('Shackleton Crater was not found')
+        }
+
+        setLocation(shackleton)
+      } catch (err) {
+        setError(err.message || 'Unable to connect to the server')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    getLocation()
+  }, [])
+
   return (
     <div className="app">
       <nav className="navbar">
@@ -18,32 +54,62 @@ function Shackleton() {
         <section className="location-details">
           <div className="detail-content">
             <p className="label">FEATURED LOCATION</p>
-            <h2>Shackleton Crater</h2>
 
-            <img
-              src="https://science.nasa.gov/wp-content/uploads/2024/01/faces-of-shackleton.jpg"
-              alt="Shackleton Crater near the Moon's south pole"
-              style={{
-                width: '100%',
-                maxWidth: '800px',
-                borderRadius: '8px',
-                margin: '24px 0',
-              }}
-            />
+            {loading && <p>Loading location...</p>}
 
-            <p>
-              Shackleton Crater lies near the Moon's south pole.
-              Parts of its interior receive very little direct
-              sunlight, making the region important for studying
-              the lunar environment and the possibility of water ice.
-            </p>
+            {error && <p role="alert">{error}</p>}
 
-            <p>
-              Scientists study the lunar south pole to understand
-              its terrain, lighting conditions, and potential resources.
-              These observations can help inform future robotic and
-              crewed exploration missions.
-            </p>
+            {location && (
+              <>
+                <h2>{location.name}</h2>
+
+                {location.imageUrl && (
+                  <img
+                    src={location.imageUrl}
+                    alt={location.name}
+                    style={{
+                      width: '100%',
+                      maxWidth: '800px',
+                      borderRadius: '8px',
+                      margin: '24px 0',
+                    }}
+                  />
+                )}
+
+                <p>{location.description}</p>
+
+                {location.region && <p>Region: {location.region}</p>}
+
+                <p>
+                  Latitude: {location.latitude ?? 'N/A'}°
+                  {' | '}
+                  Longitude: {location.longitude ?? 'N/A'}°
+                </p>
+
+                {location.facts?.length > 0 && (
+                  <>
+                    <h3>Facts</h3>
+                    <ul>
+                      {location.facts.map((fact, index) => (
+                        <li key={index}>{fact}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                {location.sourceUrl && (
+                  <p>
+                    <a
+                      href={location.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Learn more from NASA
+                    </a>
+                  </p>
+                )}
+              </>
+            )}
 
             <Link to="/" className="back-link">
               ← Back to Explore
@@ -51,10 +117,6 @@ function Shackleton() {
           </div>
         </section>
       </main>
-
-      <footer>
-        <p>LUNASCOPE · Lunar Terrain Explorer</p>
-      </footer>
     </div>
   )
 }

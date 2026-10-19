@@ -1,61 +1,83 @@
 
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
 function WaterIce() {
+  const [topic, setTopic] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    async function fetchTopic() {
+      try {
+        const response = await fetch(
+          'http://localhost:3000/api/locations'
+        )
+
+        if (!response.ok) {
+          throw new Error('Failed to load Water Ice content')
+        }
+
+        const data = await response.json()
+
+        const record = data.find(
+          item => item.name === 'Water Ice on the Moon'
+        )
+
+        if (!record) {
+          throw new Error('Water Ice record not found in database')
+        }
+
+        setTopic(record)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTopic()
+  }, [])
+
+  if (loading) return <p>Loading Water Ice content...</p>
+  if (error) return <p role="alert">{error}</p>
+
   return (
-    <div className="app">
-      <nav className="navbar">
-        <Link to="/" className="logo">LUNASCOPE</Link>
+    <main className="location-details">
+      <Link to="/">← Back to Explore</Link>
 
-        <div className="nav-links">
-          <Link to="/">Explore</Link>
-          <Link to="/#study-areas">Study Areas</Link>
-          <Link to="/#about">About</Link>
-        </div>
-      </nav>
+      <p className="label">{topic.type}</p>
+      <h1>{topic.name}</h1>
 
-      <main>
-        <section className="location-details">
-          <div className="detail-content">
-            <p className="label">LUNAR SCIENCE</p>
-            <h2>Water Ice on the Moon</h2>
+      {topic.imageUrl && (
+        <img
+          src={topic.imageUrl}
+          alt={topic.name}
+          style={{ width: '100%', maxWidth: '800px' }}
+        />
+      )}
 
-            <img
-              src="https://assets.science.nasa.gov/dynamicimage/assets/science/psd/solar/2023/09/l/lunar_south_pole_lroc.png?crop=faces%2Cfocalpoint&fit=clip&h=1214&w=1214"
-              alt="Illumination map of the Moon's south pole"
-              style={{
-                width: '100%',
-                maxWidth: '800px',
-                borderRadius: '8px',
-                margin: '24px 0',
-              }}
-            />
+      <p>{topic.description}</p>
 
-            <p>
-              Permanently shadowed regions are areas near the lunar
-              poles that receive little or no direct sunlight.
-              Their extremely cold conditions may allow water ice
-              to persist for long periods.
-            </p>
+      <p>Region: {topic.region}</p>
 
-            <p>
-              Studying these regions could help scientists understand
-              the Moon's history and potential resources. Water ice
-              may also be useful for future exploration, although
-              its availability and accessibility must be investigated.
-            </p>
+      {topic.facts?.length > 0 && (
+        <>
+          <h2>Key Facts</h2>
+          <ul>
+            {topic.facts.map((fact, index) => (
+              <li key={index}>{fact}</li>
+            ))}
+          </ul>
+        </>
+      )}
 
-            <Link to="/" className="back-link">
-              ← Back to Explore
-            </Link>
-          </div>
-        </section>
-      </main>
-
-      <footer>
-        <p>LUNASCOPE · Lunar Terrain Explorer</p>
-      </footer>
-    </div>
+      {topic.sourceUrl && (
+        <a href={topic.sourceUrl} target="_blank" rel="noreferrer">
+          Learn more from NASA
+        </a>
+      )}
+    </main>
   )
 }
 
