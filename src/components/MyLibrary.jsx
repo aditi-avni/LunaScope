@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react'
 
-const API_URL = 'http://localhost:3000/api'
+const API_URL = '/api/locations'
 
 function MyLibrary() {
   const [token, setToken] = useState(

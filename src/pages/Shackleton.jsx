@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 
-const API_URL = 'http://localhost:3000/api/locations'
+const API_URL = '/api/locations'
 
 function Shackleton() {
   const [location, setLocation] = useState(null)
