@@ -11,7 +11,7 @@ function WaterIce() {
     async function fetchTopic() {
       try {
         const response = await fetch(
-          '/api/locations'
+          'http://localhost:3000/api/locations'
         )
 
         if (!response.ok) {
