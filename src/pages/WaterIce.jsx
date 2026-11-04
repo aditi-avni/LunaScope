@@ -11,7 +11,7 @@ function WaterIce() {
     async function fetchTopic() {
       try {
         const response = await fetch(
-          'http://localhost:3000/api/locations'
+          'https://lunascope-zm6x.onrender.com/api/locations'
         )
 
         if (!response.ok) {

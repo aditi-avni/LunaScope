@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import MyLibrary from '../components/MyLibrary'
 
-const API_URL = 'http://localhost:3000/api/locations'
+const API_URL = 'https://lunascope-zm6x.onrender.com/api/locations'
 
 const FALLBACK_IMAGE =
   'https://images-assets.nasa.gov/image/PIA00405/PIA00405~orig.jpg'
